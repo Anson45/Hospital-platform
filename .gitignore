@@ -1,0 +1,45 @@
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.slnx.sqlite
+*.DotSettings.user
+TestResults/
+
+# .NET build output
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+publish/
+*.dll
+*.exe
+*.pdb
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Node (web app)
+node_modules/
+dist/
+.angular/
+.next/
+
+# Logs and OS files
+*.log
+.DS_Store
+Thumbs.db
+
+# Secrets and local configuration
+.env
+.env.*
+appsettings.Development.json
+*.secrets.json
