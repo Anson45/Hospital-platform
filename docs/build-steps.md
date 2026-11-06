@@ -162,3 +162,36 @@ Python services (AI/Analytics) use Alembic — covered when those services are b
 - [ ] All affected tests pass
 - [ ] No secrets, connection strings, or real data committed
 - [ ] Changes follow [the engineering standards](./project-structure-and-standards.md)
+
+
+
+
+## 10. Completed so far
+•	✅ Four .NET solutions scaffolded (Clean Architecture + references)
+•	✅ Engineering standards, SOLID, .editorconfig
+•	✅ Repo-wide build config (Directory.Build.props + central package management)
+•	✅ Local infrastructure (SQL Server, PostgreSQL, MongoDB, Redis, RabbitMQ) + DB init
+•	✅ Polyglot persistence decided and documented
+•	✅ Build steps guide
+Recommended next steps (in order)
+1. Add NuGet packages per service (quick foundation)
+•	Gateway: Yarp.ReverseProxy
+•	Identity: EF Core + Microsoft.EntityFrameworkCore.SqlServer, ASP.NET Identity, JWT
+•	Patient/Appointment: EF Core + Npgsql.EntityFrameworkCore.PostgreSQL
+•	Pharmacy/Billing: EF Core + SqlServer, MassTransit, Polly
+•	Shared: Serilog
+•	All versions go in Directory.Packages.props.
+2. Build the Identity Service (the real first feature — everything depends on auth)
+•	ASP.NET Core Identity on SQL Server (HPIdentityDb)
+•	Local register/login, JWT access + refresh tokens
+•	Roles: Admin, Doctor, Nurse, Receptionist, Pharmacist, Billing
+•	/health endpoint + EF Core migration
+3. Gateway with YARP — routing + JWT validation so services sit behind one entry point.
+My recommendation
+Start with the Identity Service (option 2) since it's the authentication foundation for every other service, adding its NuGet packages as part of that work. This follows the plan's roadmap (weeks 2–3).
+Want me to start building the Identity Service? I'll set up:
+•	EF Core + ASP.NET Identity on SQL Server
+•	JWT token generation (access + refresh)
+•	Roles seeding
+•	A health endpoint and the first migration
+Or if you'd prefer, I can do option 1 (add all NuGet packages) across every service first. Which do you want?
