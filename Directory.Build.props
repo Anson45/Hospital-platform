@@ -1,0 +1,34 @@
+<Project>
+
+  <!--
+    Repo-wide build settings for all .NET projects in the Hospital Platform.
+    Encodes the standards in docs/project-structure-and-standards.md.
+    This file is automatically imported by every project under this directory.
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+
+    <!-- Analyzers and code quality -->
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+
+    <!-- Deterministic, reproducible builds -->
+    <Deterministic>true</Deterministic>
+
+    <!-- Treat warnings as errors on CI only, so local builds stay friendly.
+         GitHub Actions and most CI systems set CI=true. -->
+    <TreatWarningsAsErrors Condition="'$(ContinuousIntegrationBuild)' == 'true' or '$(CI)' == 'true'">true</TreatWarningsAsErrors>
+    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+  </PropertyGroup>
+
+  <!-- Test projects should not be packed and may relax some rules -->
+  <PropertyGroup Condition="$(MSBuildProjectName.EndsWith('.Tests'))">
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+</Project>

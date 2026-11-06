@@ -14,24 +14,24 @@ high-level plan in [`enterprise-app-plan.md`](./enterprise-app-plan.md).
 
 ```
 Hospital-platform/
-├── docs/                                   # Plan + engineering standards (this file)
+├── docs/										# Plan + engineering standards (this file)
 └── src/
-	├── gateway/                            # API gateway (.NET, YARP)
-	│   ├── Gateway.Api/                     # ASP.NET Core empty web host
-	│   ├── Gateway.Tests/                   # xUnit tests
+	├── gateway/								# API gateway (.NET, YARP)
+	│   ├── Gateway.Api/						# ASP.NET Core empty web host
+	│   ├── Gateway.Tests/						# xUnit tests
 	│   └── Gateway.slnx
-	├── identity-service/                   # .NET — accounts, login, JWT, roles
-	│   ├── Identity.Api/                     # ASP.NET Core Web API
-	│   ├── Identity.Tests/                   # xUnit tests
+	├── identity-service/						# .NET — accounts, login, JWT, roles
+	│   ├── Identity.Api/						# ASP.NET Core Web API
+	│   ├── Identity.Tests/						# xUnit tests
 	│   └── Identity.slnx
-	├── patient-appointment-service/        # .NET — Clean Architecture + CQRS
-	│   ├── PatientAppointment.Domain/        # Entities, value objects, domain rules
-	│   ├── PatientAppointment.Application/   # Commands, queries, handlers, interfaces
-	│   ├── PatientAppointment.Infrastructure/# EF Core, Redis, RabbitMQ, gRPC, external IO
-	│   ├── PatientAppointment.Api/           # REST controllers, gRPC services, SignalR hub
-	│   ├── PatientAppointment.Tests/         # xUnit tests (Domain + Application)
+	├── patient-appointment-service/			# .NET — Clean Architecture + CQRS
+	│   ├── PatientAppointment.Domain/			# Entities, value objects, domain rules
+	│   ├── PatientAppointment.Application/		# Commands, queries, handlers, interfaces
+	│   ├── PatientAppointment.Infrastructure/	# EF Core, Redis, RabbitMQ, gRPC, external IO
+	│   ├── PatientAppointment.Api/				# REST controllers, gRPC services, SignalR hub
+	│   ├── PatientAppointment.Tests/			# xUnit tests (Domain + Application)
 	│   └── PatientAppointment.slnx
-	└── pharmacy-billing-service/           # .NET — Clean Architecture + CQRS
+	└── pharmacy-billing-service/				# .NET — Clean Architecture + CQRS
 		├── PharmacyBilling.Domain/
 		├── PharmacyBilling.Application/
 		├── PharmacyBilling.Infrastructure/
@@ -69,29 +69,29 @@ services (Gateway, Identity) stay flat to avoid unnecessary ceremony.
 Dependencies point **inward only**. The Domain has no external dependencies.
 
 ```
-		  ┌─────────────────────────────────────────┐
+		  ┌───────────────────────────────────────────┐
 		  │                  Api                      │  REST / gRPC / SignalR
 		  │   (controllers, hubs, DI composition)     │
 		  └───────────────┬─────────────┬─────────────┘
 						  │             │
 						  ▼             ▼
-		  ┌───────────────────────┐    │
-		  │    Infrastructure      │    │  EF Core, Redis, RabbitMQ, gRPC clients
-		  │  (implements Application│    │
-		  │     interfaces)        │    │
-		  └───────────┬────────────┘    │
-					  │                  │
-					  ▼                  ▼
-		  ┌─────────────────────────────────────────┐
+		  ┌──────────────────────────┐    │
+		  │    Infrastructure        │    │  EF Core, Redis, RabbitMQ, gRPC clients
+		  │  (implements Application │    │
+		  │     interfaces)          │    │
+		  └───────────┬──────────────┘    │
+					  │                   │
+					  ▼                   ▼
+		  ┌───────────────────────────────────────────┐
 		  │               Application                 │  Commands, queries, handlers,
 		  │   (use cases, DTOs, port interfaces)      │  port interfaces (IRepository...)
 		  └───────────────────┬───────────────────────┘
 							  │
 							  ▼
-		  ┌─────────────────────────────────────────┐
+		  ┌───────────────────────────────────────────┐
 		  │                 Domain                    │  Entities, value objects, rules
 		  │          (no dependencies)                │
-		  └─────────────────────────────────────────┘
+		  └───────────────────────────────────────────┘
 ```
 
 Project references (as wired in the solutions):
@@ -312,6 +312,20 @@ High-level policy depends on abstractions, not on details.
 ---
 
 ## 10. Build & Validation
+
+### 10.1 Repo-wide build configuration
+
+Two files at the repository root apply to every .NET project automatically:
+
+- [`Directory.Build.props`](../Directory.Build.props) — shared settings: `net10.0`,
+  `Nullable` and `ImplicitUsings` enabled, `latest` language version, recommended
+  analyzers with `EnforceCodeStyleInBuild`, and `TreatWarningsAsErrors` on CI only
+  (when `CI=true`).
+- [`Directory.Packages.props`](../Directory.Packages.props) — Central Package Management.
+  Package versions are declared once here; projects reference packages **without** a
+  `Version` attribute. Add new versions here, not in individual `.csproj` files.
+
+### 10.2 Commands
 
 Build a single service:
 
