@@ -205,3 +205,8 @@ dotnet_naming_rule.locals_params_camel.severity = warning
 dotnet_naming_rule.async_methods_suffix.symbols = async_methods
 dotnet_naming_rule.async_methods_suffix.style = async_suffix
 dotnet_naming_rule.async_methods_suffix.severity = suggestion
+
+#### Generated code ####
+# EF Core migrations are generated; analyzers should not flag them.
+[**/Migrations/*.cs]
+generated_code = true

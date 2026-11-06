@@ -101,7 +101,7 @@ Business rules in place:
 7. **Time-zone rule.** Working hours are compared against the local time in the booking's offset. Decide how clinics in different time zones are handled.
 8. **Cancel, reschedule, and no-show endpoints.** The domain methods exist; the use cases and routes do not.
 9. **Input validation** beyond the domain rules (for example, date of birth cannot be in the future).
-10. **Logging.** Serilog is planned but not added.
+10. **Logging.** Built-in `ILogger<T>` logs the booking, check-in, and completion events, and rejected requests (warnings). Serilog sinks and structured log shipping are not added yet.
 11. **Health check** only reports that the app is running; it does not check the database.
 
 ### Later (per the roadmap)

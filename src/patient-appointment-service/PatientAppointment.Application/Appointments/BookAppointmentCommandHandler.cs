@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using PatientAppointment.Application.Abstractions;
 using PatientAppointment.Application.Exceptions;
 using PatientAppointment.Domain.Entities;
@@ -5,23 +6,26 @@ using PatientAppointment.Domain.Exceptions;
 
 namespace PatientAppointment.Application.Appointments;
 
-public sealed class BookAppointmentCommandHandler : ICommandHandler<BookAppointmentCommand, Guid>
+public sealed partial class BookAppointmentCommandHandler : ICommandHandler<BookAppointmentCommand, Guid>
 {
     private readonly IPatientRepository _patients;
     private readonly IDoctorRepository _doctors;
     private readonly IAppointmentRepository _appointments;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ILogger<BookAppointmentCommandHandler> _logger;
 
     public BookAppointmentCommandHandler(
         IPatientRepository patients,
         IDoctorRepository doctors,
         IAppointmentRepository appointments,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        ILogger<BookAppointmentCommandHandler> logger)
     {
         _patients = patients;
         _doctors = doctors;
         _appointments = appointments;
         _unitOfWork = unitOfWork;
+        _logger = logger;
     }
 
     public async Task<Guid> HandleAsync(BookAppointmentCommand command, CancellationToken cancellationToken = default)
@@ -58,6 +62,13 @@ public sealed class BookAppointmentCommandHandler : ICommandHandler<BookAppointm
         _appointments.Add(appointment);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
+        LogBooked(appointment.Id, command.PatientId, command.DoctorId, command.ScheduledStart);
+
         return appointment.Id;
     }
+
+    [LoggerMessage(
+        Level = LogLevel.Information,
+        Message = "Booked appointment {AppointmentId} for patient {PatientId} with doctor {DoctorId} at {ScheduledStart}")]
+    private partial void LogBooked(Guid appointmentId, Guid patientId, Guid doctorId, DateTimeOffset scheduledStart);
 }

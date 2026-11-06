@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using PatientAppointment.Application.Abstractions;
 using PatientAppointment.Application.Appointments;
@@ -22,7 +23,12 @@ public sealed class BookAppointmentCommandHandlerTests
 
     public BookAppointmentCommandHandlerTests()
     {
-        _handler = new BookAppointmentCommandHandler(_patients, _doctors, _appointments, _unitOfWork);
+        _handler = new BookAppointmentCommandHandler(
+            _patients,
+            _doctors,
+            _appointments,
+            _unitOfWork,
+            NullLogger<BookAppointmentCommandHandler>.Instance);
     }
 
     [Fact]

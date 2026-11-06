@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using PatientAppointment.Application.Exceptions;
 using PatientAppointment.Domain.Exceptions;
 
@@ -8,8 +9,15 @@ namespace PatientAppointment.Api.ExceptionHandling;
 /// <summary>
 /// Maps domain and application failures to ProblemDetails responses, so controllers stay free of try/catch.
 /// </summary>
-public sealed class ApplicationExceptionHandler : IExceptionHandler
+public sealed partial class ApplicationExceptionHandler : IExceptionHandler
 {
+    private readonly ILogger<ApplicationExceptionHandler> _logger;
+
+    public ApplicationExceptionHandler(ILogger<ApplicationExceptionHandler> logger)
+    {
+        _logger = logger;
+    }
+
     public async ValueTask<bool> TryHandleAsync(
         HttpContext httpContext,
         Exception exception,
@@ -28,6 +36,9 @@ public sealed class ApplicationExceptionHandler : IExceptionHandler
             return false;
         }
 
+        // Expected client errors are logged as warnings. Anything unexpected is left to the default handler.
+        LogRejected(httpContext.Request.Method, httpContext.Request.Path, statusCode, exception.Message);
+
         httpContext.Response.StatusCode = statusCode;
 
         await httpContext.Response.WriteAsJsonAsync(
@@ -41,4 +52,9 @@ public sealed class ApplicationExceptionHandler : IExceptionHandler
 
         return true;
     }
+
+    [LoggerMessage(
+        Level = LogLevel.Warning,
+        Message = "Request {Method} {Path} rejected with {StatusCode}: {Reason}")]
+    private partial void LogRejected(string method, string path, int statusCode, string reason);
 }
