@@ -206,7 +206,9 @@ High-level policy depends on abstractions, not on details.
 | Solution format | `.slnx` | Default for .NET 10 SDK |
 | Test framework | xUnit | One `*.Tests` project per service |
 | API gateway | YARP | Gateway service |
-| ORM | EF Core | Per-service migrations; no cross-DB queries |
+| Relational DB | SQL Server 2022 + PostgreSQL 16 | SQL Server: Identity, Pharmacy/Billing. PostgreSQL: Patient/Appointment, Analytics |
+| Document DB | MongoDB 7 | AI service (chat history, usage logs, embeddings) |
+| ORM / data access | EF Core (`SqlServer` or `Npgsql` provider) for .NET; SQLAlchemy for Python; MongoDB driver for AI | Per-service migrations; no cross-DB queries |
 | Messaging | RabbitMQ + MassTransit | Free/OSS for this project |
 | Cache | Redis | Local Docker / Upstash free tier in cloud |
 | Resilience | Polly | Retries + circuit breakers |
@@ -215,9 +217,14 @@ High-level policy depends on abstractions, not on details.
 | Logging | Serilog (+ App Insights) | Free monitoring allowance |
 | Auth | ASP.NET Core Identity + JWT; OAuth (Google, Microsoft, GitHub, Facebook) | All free tiers |
 
-> When adding packages, pin versions explicitly in each `.csproj` and keep a single
-> version per package across a solution (consider `Directory.Packages.props` for central
-> package management).
+> **Polyglot persistence:** services are free to pick their own store because no service
+> queries another's database — they integrate via gRPC, REST, or events. Identity and
+> Pharmacy/Billing use SQL Server (ASP.NET Core Identity and financial transactions);
+> Patient/Appointment and Analytics use PostgreSQL (Npgsql); the AI service uses MongoDB.
+> Free cloud tiers: Azure SQL, Neon/Supabase (PostgreSQL), MongoDB Atlas, Upstash (Redis).
+
+> When adding packages, declare versions centrally in `Directory.Packages.props` and keep a
+> single version per package across the repo.
 
 ---
 

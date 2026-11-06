@@ -27,16 +27,26 @@ This is a study project. Use only synthetic (fake) patient data. Never use real 
 
 ## 2. Database Strategy
 
-| Environment | Setup |
-|---|---|
-| Local development | One SQL Server instance with a separate database per service (`IdentityDb`, `ClinicalDb`, `PharmacyDb`, `AiDb`, `AnalyticsDb`) |
-| Cloud deployment | One Azure SQL database (free offer) with a separate schema per service (`identity`, `clinical`, `pharmacy`, `ai`, `analytics`) |
+This project uses **polyglot persistence**: each service owns its data and uses the store
+that best fits its workload. Services never query another service's database, so each one
+can choose its own engine freely.
 
-Rules that make the switch from separate databases to one database easy:
-- Each service only reads and writes its own database or schema.
+| Service | Store | Local database | Cloud (free tier) |
+|---|---|---|---|
+| Identity | SQL Server | `HPIdentityDb` | Azure SQL |
+| Pharmacy & Billing | SQL Server | `HPPharmacyDb` | Azure SQL |
+| Patient & Appointment | PostgreSQL | `HPClinicalDb` | Neon / Supabase |
+| Analytics | PostgreSQL | `HPAnalyticsDb` | Neon / Supabase (or Timescale) |
+| AI | MongoDB | `HPAiDb` | MongoDB Atlas (M0) |
+| Shared cache | Redis | — | Upstash |
+
+Rules that keep storage swappable and services decoupled:
+- Each service only reads and writes its own database.
 - No cross-database queries. Services get data from each other through gRPC, REST, or events.
-- Each service has its own migrations (EF Core for .NET services, Alembic for Python services).
-- Connection strings are set per service through configuration, so the cloud setup only changes the connection string and the schema setting.
+- Each service has its own migrations (EF Core for .NET relational services, Alembic for
+  Python relational services; MongoDB is schema-flexible).
+- Connection strings are set per service through configuration, so moving to the cloud only
+  changes the connection string.
 
 ---
 
@@ -46,7 +56,7 @@ Rules that make the switch from separate databases to one database easy:
 
 | Layer | Technology | Why |
 |---|---|---|
-| Database | SQL Server (Docker locally, Azure SQL in cloud) | Your requirement |
+| Database | PostgreSQL (relational services) + MongoDB (AI); Docker locally, managed free tiers in cloud | Polyglot persistence, zero licensing cost |
 | Web app | Angular or React (TypeScript) | Free hosting on Azure Static Web Apps or Cloudflare Pages |
 | Mobile app | .NET MAUI (optional) | Reuse C# models; run on emulator or sideloaded APK |
 | .NET services | ASP.NET Core Web API, EF Core | Your existing strength |
@@ -114,7 +124,7 @@ Clean Architecture and CQRS are applied only to the two complex .NET services. A
         +---+---+---+---+---+---+---+---+---+---+
             |       |       |       |       |
             v       v       v       v       v
-        IdentityDb ClinicalDb PharmacyDb AiDb AnalyticsDb
+        HPIdentityDb HPClinicalDb HPPharmacyDb HPAiDb HPAnalyticsDb
         (local: separate databases; cloud: one DB with schemas)
 
     Service-to-service:
@@ -136,7 +146,7 @@ Purpose: staff accounts, login, tokens, roles.
 - External logins: Google, Microsoft, GitHub, Facebook
 - Roles: Admin, Doctor, Nurse, Receptionist, Pharmacist, Billing
 - Refresh token revocation stored in Redis
-- Database: `IdentityDb` (cloud schema: `identity`)
+- Database: `HPIdentityDb` (cloud schema: `identity`)
 
 ### 5.2 Patient and Appointment Service (.NET)
 Purpose: the core clinical-administrative domain. Uses Clean Architecture and CQRS.
@@ -149,7 +159,7 @@ Purpose: the core clinical-administrative domain. Uses Clean Architecture and CQ
 - Publishes events to RabbitMQ: `AppointmentCompleted`, `PatientRegistered`
 - Caches schedule and department lists in Redis
 - Pushes live updates (new appointment, check-in) through SignalR
-- Database: `ClinicalDb` (cloud schema: `clinical`)
+- Database: `HPClinicalDb` (cloud schema: `clinical`)
 
 Project layers:
 ```
@@ -171,7 +181,7 @@ Purpose: medicines, stock, prescriptions, and money. Merged because a prescripti
 - Polly retry and circuit breaker around the gRPC call to Patient service
 - Commands: create prescription, adjust stock, record payment
 - Queries: stock levels, outstanding balances, expiry reports
-- Database: `PharmacyDb` (cloud schema: `pharmacy` for stock and prescriptions, `billing` for invoices and payments)
+- Database: `HPPharmacyDb` (cloud schema: `pharmacy` for stock and prescriptions, `billing` for invoices and payments)
 
 Project layers follow the same four-layer structure as section 5.2.
 
@@ -185,7 +195,7 @@ Purpose: an administrative and documentation assistant.
 - Redis cache for repeated questions
 - Every AI output is marked as a draft that needs human review
 - Migrations with Alembic
-- Database: `AiDb` (cloud schema: `ai`; chat history and usage logs)
+- Database: `HPAiDb` on **MongoDB** (chat history, usage logs, and embeddings)
 
 ### 5.5 Analytics Service (Python, FastAPI + pandas)
 Purpose: hospital operations analysis and dashboards.
@@ -199,7 +209,7 @@ Purpose: hospital operations analysis and dashboards.
 - Live KPI updates pushed to the web app through SignalR-compatible WebSocket endpoint
 - CSV upload with automatic data profiling
 - Migrations with Alembic
-- Database: `AnalyticsDb` (cloud schema: `analytics`; snapshots and reports)
+- Database: `HPAnalyticsDb` (cloud schema: `analytics`; snapshots and reports)
 
 ---
 
@@ -377,15 +387,15 @@ hospital-platform/
 ## 13. Roadmap (about 16 weeks, part-time)
 
 | Week | Milestone |
-|---|---|
-| 1 | Repo, Docker Compose with SQL Server, Redis, RabbitMQ; hello-world services |
-| 2 | Identity Service: local login, JWT, roles |
-| 3 | Gateway with YARP: routing and token validation |
-| 4 | Patient and Appointment Service: Clean Architecture layers, EF Core migrations, basic CRUD |
-| 5 | Patient and Appointment: CQRS commands and queries; Redis caching |
-| 6 | Web app: login, role menu, patients and appointments pages |
-| 7 | Pharmacy and Billing Service: Clean Architecture, medicines, stock, prescriptions |
-| 8 | RabbitMQ with MassTransit: `AppointmentCompleted` event creates invoices |
+|----|---|
+| 1  | Repo, Docker Compose with PostgreSQL, MongoDB, Redis, RabbitMQ; hello-world services |
+| 2  | Identity Service: local login, JWT, roles |
+| 3  | Gateway with YARP: routing and token validation |
+| 4  | Patient and Appointment Service: Clean Architecture layers, EF Core migrations, basic CRUD |
+| 5  | Patient and Appointment: CQRS commands and queries; Redis caching |
+| 6  | Web app: login, role menu, patients and appointments pages |
+| 7  | Pharmacy and Billing Service: Clean Architecture, medicines, stock, prescriptions |
+| 8  | RabbitMQ with MassTransit: `AppointmentCompleted` event creates invoices |
 | 9 | gRPC: Patient service server, Billing client, Polly retries |
 | 10 | Analytics Service (Python): dashboard endpoints, Alembic migrations, Redis cache |
 | 11 | SignalR: live dashboard updates and low-stock alerts |

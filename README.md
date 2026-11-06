@@ -15,10 +15,24 @@ A study project: a microservices-based hospital management system built with .NE
 | `src/web` | Angular or React | Web application |
 | `src/mobile` | .NET MAUI | Optional mobile application |
 
-## Database
+## Data Storage (polyglot persistence)
 
-- **Local:** one SQL Server instance with five databases (`IdentityDb`, `ClinicalDb`, `PharmacyDb`, `AiDb`, `AnalyticsDb`), created by `infra/sql/init-databases.sql`.
-- **Cloud:** one Azure SQL database with a separate schema per service.
+Each service owns its data and uses the store that best fits its workload:
+
+| Service | Store | Database |
+|---|---|---|
+| Identity | SQL Server | `HPIdentityDb` |
+| Pharmacy & Billing | SQL Server | `HPPharmacyDb` |
+| Patient & Appointment | PostgreSQL | `HPClinicalDb` |
+| Analytics | PostgreSQL | `HPAnalyticsDb` |
+| AI | MongoDB | `HPAiDb` |
+| Shared cache | Redis | — |
+
+- **Local:** SQL Server databases are created by `infra/sql/sqlserver-init.sql`; PostgreSQL
+  databases by `infra/sql/postgres-init.sql`; MongoDB and Redis run as containers. See
+  [infra/README.md](infra/README.md).
+- **Cloud:** managed free tiers (e.g., Azure SQL for SQL Server, Neon/Supabase for
+  PostgreSQL, MongoDB Atlas, Upstash Redis).
 
 ## Rules
 
@@ -28,9 +42,16 @@ A study project: a microservices-based hospital management system built with .NE
 
 ## Getting Started
 
-Prerequisites: .NET SDK 8 or later, Python 3.11 or later, Docker Desktop, Git.
+Prerequisites: .NET SDK 10 or later, Python 3.11 or later, Docker Desktop, Git.
 
-Setup instructions will be added as each service is created.
+Start the local infrastructure (SQL Server, Redis, RabbitMQ) and create the databases:
+
+```powershell
+docker compose -f infra/docker-compose.yml up -d
+```
+
+See [infra/README.md](infra/README.md) for ports, credentials, and connection strings.
+Further per-service setup instructions will be added as each service is built.
 
 ## Documentation
 
@@ -39,6 +60,8 @@ Setup instructions will be added as each service is created.
 - [docs/project-structure-and-standards.md](docs/project-structure-and-standards.md) —
   project structure, dependency flow, design patterns, SOLID principles, versions, and the
   coding/naming standards.
+- [docs/build-steps.md](docs/build-steps.md) — prerequisites, infrastructure startup, and
+  build/test/run commands.
 
 ## Coding Standards
 
