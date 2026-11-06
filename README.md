@@ -34,4 +34,14 @@ Setup instructions will be added as each service is created.
 
 ## Documentation
 
-The full plan is in [docs/enterprise-app-plan.md](docs/enterprise-app-plan.md).
+- [docs/enterprise-app-plan.md](docs/enterprise-app-plan.md) — the full project plan
+  (architecture, microservices, roadmap, deployment).
+- [docs/project-structure-and-standards.md](docs/project-structure-and-standards.md) —
+  project structure, dependency flow, design patterns, SOLID principles, versions, and the
+  coding/naming standards.
+
+## Coding Standards
+
+Formatting and naming rules are enforced automatically by the root
+[`.editorconfig`](.editorconfig), which encodes the conventions documented in
+[docs/project-structure-and-standards.md](docs/project-structure-and-standards.md).

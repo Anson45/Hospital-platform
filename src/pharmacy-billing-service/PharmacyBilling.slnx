@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="PharmacyBilling.Api/PharmacyBilling.Api.csproj" />
+  <Project Path="PharmacyBilling.Application/PharmacyBilling.Application.csproj" />
+  <Project Path="PharmacyBilling.Domain/PharmacyBilling.Domain.csproj" />
+  <Project Path="PharmacyBilling.Infrastructure/PharmacyBilling.Infrastructure.csproj" />
+  <Project Path="PharmacyBilling.Tests/PharmacyBilling.Tests.csproj" />
+</Solution>
