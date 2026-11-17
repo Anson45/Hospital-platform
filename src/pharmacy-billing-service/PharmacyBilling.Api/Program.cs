@@ -1,41 +1,67 @@
+using System.Text.Json.Serialization;
+using Microsoft.OpenApi;
+using PharmacyBilling.Api.ExceptionHandling;
+using PharmacyBilling.Application.Abstractions;
+using PharmacyBilling.Application.Inventory;
+using PharmacyBilling.Application.Medicines;
+using PharmacyBilling.Application.Payments;
+using PharmacyBilling.Application.Prescriptions;
+using PharmacyBilling.Infrastructure;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+builder.Services.AddControllers()
+    .AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "Pharmacy & Billing API",
+        Version = "v1",
+        Description = "Medicines, stock, prescriptions, and invoices. Synthetic data only. Not for clinical use."
+    });
+});
+
+builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<ApplicationExceptionHandler>();
+builder.Services.AddHealthChecks();
+
+// Handlers read the current time through this abstraction so tests can control it.
+builder.Services.AddSingleton(TimeProvider.System);
+
+var connectionString = builder.Configuration.GetConnectionString("PharmacyBilling")
+    ?? throw new InvalidOperationException("Connection string 'PharmacyBilling' is not configured.");
+builder.Services.AddInfrastructure(connectionString);
+
+builder.Services.AddScoped<ICommandHandler<RegisterMedicineCommand, Guid>, RegisterMedicineCommandHandler>();
+builder.Services.AddScoped<ICommandHandler<ReceiveStockCommand>, ReceiveStockCommandHandler>();
+builder.Services.AddScoped<ICommandHandler<RemoveStockCommand>, RemoveStockCommandHandler>();
+builder.Services.AddScoped<ICommandHandler<CreatePrescriptionCommand, Guid>, CreatePrescriptionCommandHandler>();
+builder.Services.AddScoped<ICommandHandler<RecordPaymentCommand, Guid>, RecordPaymentCommandHandler>();
+builder.Services.AddScoped<
+    IQueryHandler<GetStockLevelsQuery, IReadOnlyList<StockLevelDto>>,
+    GetStockLevelsQueryHandler>();
+builder.Services.AddScoped<
+    IQueryHandler<GetExpiryReportQuery, IReadOnlyList<ExpiryReportItemDto>>,
+    GetExpiryReportQueryHandler>();
+builder.Services.AddScoped<
+    IQueryHandler<GetOutstandingBalancesQuery, IReadOnlyList<OutstandingBalanceDto>>,
+    GetOutstandingBalancesQueryHandler>();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Swagger UI is for development only, so the API surface is not published by default.
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
+app.UseExceptionHandler();
 app.UseHttpsRedirection();
-
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
+app.MapControllers();
+app.MapHealthChecks("/health");
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}

@@ -14,11 +14,17 @@
 
   <ItemGroup Label="ASP.NET Core">
     <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.12" />
+    <PackageVersion Include="Swashbuckle.AspNetCore" Version="10.3.1" />
   </ItemGroup>
 
-  <ItemGroup Label="Data (PostgreSQL / EF Core)">
+  <ItemGroup Label="Data (PostgreSQL / SQL Server / EF Core)">
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.14" />
     <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
+  </ItemGroup>
+
+  <ItemGroup Label="Transitive pins (security: pulled in by SQL Server provider)">
+    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="10.0.14" />
   </ItemGroup>
 
   <ItemGroup Label="Logging">

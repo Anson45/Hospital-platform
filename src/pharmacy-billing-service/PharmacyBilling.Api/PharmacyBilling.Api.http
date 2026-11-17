@@ -1,6 +1,31 @@
 @PharmacyBilling.Api_HostAddress = http://localhost:5203
 
-GET {{PharmacyBilling.Api_HostAddress}}/weatherforecast/
-Accept: application/json
+### Register a medicine
+POST {{PharmacyBilling.Api_HostAddress}}/api/medicines
+Content-Type: application/json
+
+{
+  "code": "MED-100",
+  "name": "Amoxicillin 500mg",
+  "unitPrice": 2.50
+}
+
+### Receive stock (replace the medicine id with the one returned above)
+POST {{PharmacyBilling.Api_HostAddress}}/api/medicines/00000000-0000-0000-0000-000000000000/stock
+Content-Type: application/json
+
+{
+  "batchNumber": "B-001",
+  "expiryDate": "2027-06-30",
+  "quantity": 50
+}
+
+### Stock levels
+GET {{PharmacyBilling.Api_HostAddress}}/api/inventory/stock-levels?lowStockThreshold=20
+
+###
+
+### Expiry report
+GET {{PharmacyBilling.Api_HostAddress}}/api/inventory/expiry-report?withinDays=30
 
 ###
