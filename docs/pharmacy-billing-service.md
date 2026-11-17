@@ -86,14 +86,16 @@ The service follows the four-layer structure from the plan:
 - **Domain: done.** `Medicine` (aggregate root, owns batches and stock movements), `MedicineBatch`, `StockMovement`, `Prescription`, `PrescriptionLine`, `Invoice`, `InvoiceLine`, `Payment`, and their enums. Rules: no stock below zero, no expired stock received or dispensed, earliest-expiry batches dispensed first, batch expiry fixed per batch number, payments cannot exceed the balance.
 - **Application: done.** Commands: register medicine, receive stock, remove stock, create prescription, record payment. Queries: stock levels, expiry report, outstanding balances. Ports: `IMedicineRepository`, `IInvoiceRepository`, `IPrescriptionRepository`, `IUnitOfWork`.
 - **Tests: 30 passing** (`PharmacyBilling.slnx`): domain rules and command handlers.
-- **Not started:** the Infrastructure layer (the project is empty; no DbContext, repositories, or migration), the API (`Program.cs` still runs the weather-forecast template, which causes two build warnings), the RabbitMQ consumer, the gRPC client, and SignalR.
+- **Infrastructure: done (migration not applied).** `PharmacyBillingDbContext` with the `pharmacy` and `billing` schemas, eight entity configurations, three repositories, and DI registration. The `InitialCreate` migration creates eight tables and generates cleanly. It has not been applied to a database, because Docker is not installed and SQL Server Express (`localhost\SQLEXPRESS`) refuses connections over named pipes, shared memory, and TCP.
+- **API: done.** Controllers for medicines, inventory, prescriptions, and invoices, plus ProblemDetails error mapping (including 409 for concurrent updates). Swagger UI is served at `/swagger` in Development. The health check is at `/health`. Startup works without a database.
+- **Not started:** the RabbitMQ consumer, the gRPC client, and SignalR.
 
 ## 6. Build Order
 
 1. **Done.** Domain: medicine, batch, stock movement, prescription, invoice, and payment, with their rules
 2. **Done.** Application: create prescription, adjust stock, record payment, and the stock, balance, and expiry queries
-3. **Not started.** Infrastructure: `PharmacyBillingDbContext` with the `pharmacy` and `billing` schemas, repositories, and an initial migration
-4. **Not started.** API: endpoints for the commands and queries, and the SignalR hub for alerts
+3. **Done (migration not applied).** Infrastructure: `PharmacyBillingDbContext` with the `pharmacy` and `billing` schemas, repositories, and the `InitialCreate` migration
+4. **Partly done.** API: endpoints for the commands and queries, and Swagger, are done. The SignalR hub for alerts is not started.
 5. **Not started.** Messaging: RabbitMQ consumer for `AppointmentCompleted` with an idempotency check
 6. **Not started.** gRPC client to the Patient service, wrapped in Polly retry and circuit breaker
 7. **Partly done.** Unit tests for the domain rules and command handlers are passing. The end-to-end test of the event flow is not started.

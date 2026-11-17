@@ -12,7 +12,7 @@ using PharmacyBilling.Infrastructure.Persistence;
 namespace PharmacyBilling.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(PharmacyBillingDbContext))]
-    [Migration("20261117051203_InitialCreate")]
+    [Migration("20261117053057_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
