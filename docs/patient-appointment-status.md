@@ -1,7 +1,9 @@
 # PatientAppointment Service: Status and Plan
 
 Written for: the project team, to see what is done, what is left, and what comes next.
-Status as of 2026-11-06. Synthetic data only.
+Status as of 2026-11-17. Synthetic data only.
+
+On 2026-11-17 the solution was rebuilt (0 warnings, 0 errors) and all 20 tests were run and pass. The routes, health check, and logging were checked against the code. Items that need a manual check, such as applying the migration to a live database, are marked "unverified".
 
 Reference: [enterprise-app-plan.md](./enterprise-app-plan.md) (roadmap, section 13) and
 [project-structure-and-standards.md](./project-structure-and-standards.md).
@@ -54,7 +56,7 @@ Business rules in place:
 
 - `PatientAppointmentDbContext` with schema `clinical` (PostgreSQL, Npgsql).
 - Seven entity configurations, five repositories, and dependency-injection registration.
-- Initial migration `InitialCreate` (six tables, foreign keys, and indexes). Generated but not yet applied to a database.
+- Initial migration `InitialCreate` (six tables, foreign keys, and indexes). Generated (files present in `Persistence/Migrations`). Applying it to a database is unverified.
 
 ### Api (`PatientAppointment.Api`)
 
@@ -89,7 +91,7 @@ Business rules in place:
 
 ### Must do before the service is usable
 
-1. **Apply the migration** to a local PostgreSQL database (`dotnet ef database update`). Needs Docker and the connection-string password.
+1. **Apply the migration** to a local PostgreSQL database (`dotnet ef database update`). Needs Docker and the connection-string password. Unverified.
 2. **Manual end-to-end run** of the flow: register patient, create department, create doctor, add schedule, book, check in, complete, list appointments.
 3. **Integration tests** against a real PostgreSQL container (Testcontainers), as the plan's testing section requires.
 4. **Authentication and authorization.** All endpoints are currently open. This is the biggest gap. It depends on the Identity service and the Gateway, which are not built yet.
@@ -102,7 +104,7 @@ Business rules in place:
 8. **Cancel, reschedule, and no-show endpoints.** The domain methods exist; the use cases and routes do not.
 9. **Input validation** beyond the domain rules (for example, date of birth cannot be in the future).
 10. **Logging.** Built-in `ILogger<T>` logs the booking, check-in, and completion events, and rejected requests (warnings). Serilog sinks and structured log shipping are not added yet.
-11. **Health check** only reports that the app is running; it does not check the database.
+11. **Health check** only reports that the app is running (`AddHealthChecks()` at `/health`, with no database check). Unchanged as of 2026-11-17.
 
 ### Later (per the roadmap)
 

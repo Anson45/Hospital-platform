@@ -1,7 +1,7 @@
 # Pharmacy and Billing Service: Scope and Plan
 
 Written for: the project team, to see what the service must do, how it fits the platform, and what is still to build.
-Status as of 2026-11-06. Synthetic data only.
+Status as of 2026-11-17. Synthetic data only.
 
 Reference: [enterprise-app-plan.md](./enterprise-app-plan.md) (section 5.3, roadmap step 7 to 9) and
 [project-structure-and-standards.md](./project-structure-and-standards.md).
@@ -82,25 +82,28 @@ The service follows the four-layer structure from the plan:
 
 ## 5. Current Status
 
-- Solution and project skeleton exist (`PharmacyBilling.slnx` and the five projects).
-- Each library project still holds an empty placeholder class (`Class1.cs`). The test project holds an empty `UnitTest1.cs`.
-- The API still runs the weather-forecast template in `Program.cs`. It will be replaced.
-- No domain model, database context, migrations, endpoints, consumer, or gRPC client exist yet.
+- Solution and five projects exist (`PharmacyBilling.slnx`). The placeholder `Class1.cs` and `UnitTest1.cs` files are removed.
+- **Domain: done.** `Medicine` (aggregate root, owns batches and stock movements), `MedicineBatch`, `StockMovement`, `Prescription`, `PrescriptionLine`, `Invoice`, `InvoiceLine`, `Payment`, and their enums. Rules: no stock below zero, no expired stock received or dispensed, earliest-expiry batches dispensed first, batch expiry fixed per batch number, payments cannot exceed the balance.
+- **Application: done.** Commands: register medicine, receive stock, remove stock, create prescription, record payment. Queries: stock levels, expiry report, outstanding balances. Ports: `IMedicineRepository`, `IInvoiceRepository`, `IPrescriptionRepository`, `IUnitOfWork`.
+- **Tests: 30 passing** (`PharmacyBilling.slnx`): domain rules and command handlers.
+- **Not started:** the Infrastructure layer (the project is empty; no DbContext, repositories, or migration), the API (`Program.cs` still runs the weather-forecast template, which causes two build warnings), the RabbitMQ consumer, the gRPC client, and SignalR.
 
 ## 6. Build Order
 
-1. Domain: medicine, batch, stock movement, prescription, invoice, and payment, with their rules (for example, stock cannot go below zero, expired batches cannot be dispensed)
-2. Application: create prescription, adjust stock, record payment, and the stock, balance, and expiry queries
-3. Infrastructure: `PharmacyBillingDbContext` with the `pharmacy` and `billing` schemas, repositories, and an initial migration
-4. API: endpoints for the commands and queries, and the SignalR hub for alerts
-5. Messaging: RabbitMQ consumer for `AppointmentCompleted` with an idempotency check
-6. gRPC client to the Patient service, wrapped in Polly retry and circuit breaker
-7. Tests: unit tests for rules, and an end-to-end test of the event flow (publish, consume, invoice created)
+1. **Done.** Domain: medicine, batch, stock movement, prescription, invoice, and payment, with their rules
+2. **Done.** Application: create prescription, adjust stock, record payment, and the stock, balance, and expiry queries
+3. **Not started.** Infrastructure: `PharmacyBillingDbContext` with the `pharmacy` and `billing` schemas, repositories, and an initial migration
+4. **Not started.** API: endpoints for the commands and queries, and the SignalR hub for alerts
+5. **Not started.** Messaging: RabbitMQ consumer for `AppointmentCompleted` with an idempotency check
+6. **Not started.** gRPC client to the Patient service, wrapped in Polly retry and circuit breaker
+7. **Partly done.** Unit tests for the domain rules and command handlers are passing. The end-to-end test of the event flow is not started.
 
 Steps 5 and 6 depend on the Patient service's RabbitMQ publisher and gRPC server, which are on its roadmap.
 
 ## 7. Open Questions
 
-- **Alert thresholds:** what stock level counts as low, and how many days before expiry counts as near-expiry? Set in configuration, with defaults to confirm.
-- **Invoice pricing:** where do consultation and bed-stay prices come from? Options are a price table in this service or a value carried in the event.
-- **Simulated payments:** card payments are recorded with a status only. No payment gateway is involved.
+- **Alert thresholds:** defaults are set in code: low stock below 20 available units, near expiry within 30 days (`InventoryAlertDefaults`). Queries can override them. Moving them to configuration is part of the API step. Confirm the defaults.
+- **Invoice pricing:** medicine prices come from this service's catalog, and each prescription line keeps the price from when it was issued. Consultation and bed-stay prices are still open: a price table here, or a value carried in the event.
+- **Simulated payments:** decided. Card payments are recorded with the `SimulatedApproved` status. Cash payments are recorded as `Succeeded`. No payment gateway is involved.
+- **Visit and patient checks:** not yet validated. The service does not check that a visit or patient exists until the gRPC client is built.
+- **Bed stays:** every invoice requires a `VisitId`. Confirm whether a bed stay belongs to a visit before the event consumer is built.

@@ -166,32 +166,31 @@ Python services (AI/Analytics) use Alembic — covered when those services are b
 
 
 
-## 10. Completed so far
-•	✅ Four .NET solutions scaffolded (Clean Architecture + references)
-•	✅ Engineering standards, SOLID, .editorconfig
-•	✅ Repo-wide build config (Directory.Build.props + central package management)
-•	✅ Local infrastructure (SQL Server, PostgreSQL, MongoDB, Redis, RabbitMQ) + DB init
-•	✅ Polyglot persistence decided and documented
-•	✅ Build steps guide
-Recommended next steps (in order)
-1. Add NuGet packages per service (quick foundation)
-•	Gateway: Yarp.ReverseProxy
-•	Identity: EF Core + Microsoft.EntityFrameworkCore.SqlServer, ASP.NET Identity, JWT
-•	Patient/Appointment: EF Core + Npgsql.EntityFrameworkCore.PostgreSQL
-•	Pharmacy/Billing: EF Core + SqlServer, MassTransit, Polly
-•	Shared: Serilog
-•	All versions go in Directory.Packages.props.
-2. Build the Identity Service (the real first feature — everything depends on auth)
-•	ASP.NET Core Identity on SQL Server (HPIdentityDb)
-•	Local register/login, JWT access + refresh tokens
-•	Roles: Admin, Doctor, Nurse, Receptionist, Pharmacist, Billing
-•	/health endpoint + EF Core migration
-3. Gateway with YARP — routing + JWT validation so services sit behind one entry point.
-My recommendation
-Start with the Identity Service (option 2) since it's the authentication foundation for every other service, adding its NuGet packages as part of that work. This follows the plan's roadmap (weeks 2–3).
-Want me to start building the Identity Service? I'll set up:
-•	EF Core + ASP.NET Identity on SQL Server
-•	JWT token generation (access + refresh)
-•	Roles seeding
-•	A health endpoint and the first migration
-Or if you'd prefer, I can do option 1 (add all NuGet packages) across every service first. Which do you want?
+## 10. Status
+
+Last updated: 2026-11-17.
+
+### Completed
+- Four .NET solutions scaffolded (Clean Architecture + references)
+- Engineering standards, SOLID, `.editorconfig`
+- Repo-wide build config (`Directory.Build.props` + central package management)
+- Local infrastructure (SQL Server, PostgreSQL, MongoDB, Redis, RabbitMQ) + DB init
+- Polyglot persistence decided and documented
+- Build steps guide
+- **Patient & Appointment service:** Domain, Application, Infrastructure (EF Core, `InitialCreate` migration), and Api. The solution builds with 0 warnings and its 20 tests pass. Still open: authentication, cancel/reschedule/no-show endpoints, visit notes, events, gRPC, caching, SignalR. See [patient-appointment-status.md](./patient-appointment-status.md).
+- **Pharmacy & Billing service:** Domain and Application done, with 30 passing tests. Infrastructure, API, the RabbitMQ consumer, and the gRPC client are not started. See [pharmacy-billing-service.md](./pharmacy-billing-service.md).
+
+### Not started
+- **Identity service:** `Identity.Api/Program.cs` and a template test file only. No authentication code.
+- **Gateway:** `Gateway.Api/Program.cs` and a template test file only. No YARP routing.
+- **AI and Analytics services, web app, mobile app:** not scaffolded.
+
+### Recommended next steps (in order)
+1. Build the Identity Service. Every other service depends on it, and the Patient endpoints are open until it exists.
+   - ASP.NET Core Identity on SQL Server (`HPIdentityDb`)
+   - Local register/login, JWT access + refresh tokens
+   - Roles: Admin, Doctor, Nurse, Receptionist, Pharmacist, Billing
+   - `/health` endpoint + EF Core migration
+2. Gateway with YARP: routing and JWT validation, so the services sit behind one entry point.
+3. Pharmacy & Billing Infrastructure: `PharmacyBillingDbContext` (`pharmacy` and `billing` schemas), repositories, and the first migration.
+4. Add the NuGet packages per service (EF Core, Npgsql, MassTransit, Polly, Serilog) as each feature needs them. All versions go in `Directory.Packages.props`.
